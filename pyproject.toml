@@ -1,0 +1,29 @@
+[project]
+name = "av-collisions"
+version = "0.1.0"
+description = "CA DMV Autonomous Vehicle Collision Report Scraper"
+readme = "README.md"
+authors = [
+    { name = "Roland", email = "roland@example.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "pymupdf>=1.27.2.2",
+    "requests>=2.33.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.4",
+]
+
+[project.scripts]
+av-collisions = "av_collisions.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/av_collisions"]

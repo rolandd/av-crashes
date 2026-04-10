@@ -1,0 +1,35 @@
+name: Daily AV Collision Scraper
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Runs at 08:00 UTC every day
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed to push changes back to the repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run scraper
+        run: uv run src/av_collisions/main.py
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update collision reports state and data [skip ci]"
+          file_pattern: 'state.json data/images/*.png data/metadata/*.json'
+          branch: main
