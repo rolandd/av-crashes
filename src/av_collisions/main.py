@@ -29,8 +29,11 @@ def process_single_report(
     report: Dict[str, Any],
     post: bool = True,
     save_dir: str | None = None,
-) -> bool:
-    """Processes a single report: downloads, parses, and optionally posts."""
+) -> str | None:
+    """
+    Processes a single report: downloads, parses, and optionally posts.
+    Returns the autonomous_mode status string if successful, else None.
+    """
     url = report["url"]
     raw_title = report["raw_title"]
     company = report["company"]
@@ -66,14 +69,14 @@ def process_single_report(
                 post_to_bluesky(
                     url, company, date, image_bytes, extra_metadata, description
                 )
-            return True
+            return str(extra_metadata.get("autonomous_mode", "/Off"))
         else:
             logging.warning(f"Could not find Section 5 in PDF: {url}")
-            return False
+            return None
 
     except Exception as e:
         logging.error(f"Error processing {url}: {e}")
-        return False
+        return None
 
 
 def main() -> None:
@@ -150,12 +153,14 @@ def main() -> None:
         if is_processed(state, url):
             continue
 
-        if process_single_report(report, post=True):
+        auto_mode = process_single_report(report, post=True)
+        if auto_mode is not None:
             # Mark as processed in state
             metadata = {
                 "raw_title": report["raw_title"],
                 "company": report["company"],
                 "date": report["date"],
+                "autonomous_mode": auto_mode,
                 "processed_at": datetime.now().isoformat(),
             }
             mark_processed(state, url, metadata)
