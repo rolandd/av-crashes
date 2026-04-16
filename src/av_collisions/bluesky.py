@@ -9,6 +9,8 @@ def post_to_bluesky(
     company: str,
     formatted_date: str,
     image_bytes: bytes,
+    width: int,
+    height: int,
     metadata: Dict[str, Any],
     description_text: str,
 ) -> None:
@@ -43,10 +45,11 @@ def post_to_bluesky(
         embed = models.AppBskyEmbedImages.Main(
             images=[
                 models.AppBskyEmbedImages.Image(
-                    alt=description_text[
-                        :2000
-                    ],  # Alt text limit is usually large but let's be safe
+                    alt=description_text[:2000],
                     image=upload.blob,
+                    aspect_ratio=models.AppBskyEmbedDefs.AspectRatio(
+                        width=width, height=height
+                    ),
                 )
             ]
         )

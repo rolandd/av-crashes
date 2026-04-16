@@ -44,7 +44,13 @@ def process_single_report(
     try:
         # Download and parse PDF
         pdf_bytes = download_pdf(url)
-        image_bytes, description, extra_metadata = extract_section_5(pdf_bytes)
+        (
+            image_bytes,
+            width,
+            height,
+            description,
+            extra_metadata,
+        ) = extract_section_5(pdf_bytes)
 
         if image_bytes:
             slug = slugify(url)
@@ -67,7 +73,14 @@ def process_single_report(
 
             if post:
                 post_to_bluesky(
-                    url, company, date, image_bytes, extra_metadata, description
+                    url,
+                    company,
+                    date,
+                    image_bytes,
+                    width,
+                    height,
+                    extra_metadata,
+                    description,
                 )
             return bool(extra_metadata.get("autonomous_mode"))
         else:

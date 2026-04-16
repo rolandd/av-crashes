@@ -14,15 +14,18 @@ def download_pdf(url: str) -> bytes:
     return response.content
 
 
-def extract_section_5(pdf_bytes: bytes) -> Tuple[Optional[bytes], str, Dict[str, Any]]:
+def extract_section_5(
+    pdf_bytes: bytes,
+) -> Tuple[Optional[bytes], int, int, str, Dict[str, Any]]:
     """
     Parses the PDF to extract an image and text from SECTION 5.
     Also extracts checkbox values for Autonomous and Conventional modes.
-    Returns a tuple of (image_bytes, description_text, extra_metadata).
+    Returns a tuple of (image_bytes, width, height, description_text, extra_metadata).
     """
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     description_text = ""
     image_bytes = None
+    width, height = 0, 0
     extra_metadata = {}
 
     # Search for SECTION 5 header
@@ -127,9 +130,10 @@ def extract_section_5(pdf_bytes: bytes) -> Tuple[Optional[bytes], str, Dict[str,
         mat = fitz.Matrix(zoom, zoom)
         pix = page.get_pixmap(matrix=mat, clip=final_crop)
         image_bytes = pix.tobytes("png")
+        width, height = pix.width, pix.height
 
     doc.close()
-    return image_bytes, description_text, extra_metadata
+    return image_bytes, width, height, description_text, extra_metadata
 
 
 def save_output(

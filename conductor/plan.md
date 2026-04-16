@@ -1,26 +1,29 @@
-# Company Name Cleanup and Force Bootstrap Plan
+# Bluesky Image Aspect Ratio Plan
 
 ## Objective
-Fix the remaining trailing commas in `state.json` by making the company cleanup logic more robust and forcing an update in the bootstrap mode when the parsed data differs from the existing state.
+Fix the "grey space" (letterboxing) issue on Bluesky by providing the exact aspect ratio (width and height) of the extracted images. This allows the Bluesky client to size the image container correctly for the content.
 
 ## Key Files & Context
-- `src/av_collisions/fetcher.py`: Contains `clean_company_name`.
-- `src/av_collisions/main.py`: Contains the bootstrap update condition.
+- `src/av_collisions/pdf_parser.py`: Where images are generated.
+- `src/av_collisions/bluesky.py`: Where images are posted.
+- `src/av_collisions/main.py`: The orchestrator that passes data between them.
 
 ## Implementation Steps
 
-### 1. Robust Cleanup (`src/av_collisions/fetcher.py`)
-- Update `clean_company_name` to use a loop or more comprehensive `rstrip` to remove trailing commas and whitespace repeatedly until none remain.
-- Example: `"Ghost Autonomy Inc, "` -> `"Ghost Autonomy Inc"`
+### 1. Update `src/av_collisions/pdf_parser.py`
+- Modify `extract_section_5` to return the width and height of the generated pixmap.
+- Update the return type hint to `Tuple[Optional[bytes], int, int, str, Dict[str, Any]]`.
+- Return `(image_bytes, pix.width, pix.height, description_text, extra_metadata)`.
 
-### 2. Aggressive Bootstrap Update (`src/av_collisions/main.py`)
-- Update the `needs_update` condition in the bootstrap loop.
-- Force an update if:
-    - `existing_meta.get("company") != report["company"]`
-    - `existing_meta.get("date") != report["date"]`
-- This ensures that improvements to the parser logic are immediately reflected in `state.json` when running with `--bootstrap`.
+### 2. Update `src/av_collisions/bluesky.py`
+- Modify `post_to_bluesky` signature to accept `width: int` and `height: int`.
+- Update the `models.AppBskyEmbedImages.Image` constructor to include the `aspect_ratio` field.
+- Use `models.AppBskyEmbedDefs.AspectRatio(width=width, height=height)`.
 
-### 3. Verification
-- Run `uv run av-collisions --bootstrap`.
-- Check `state.json` for "Ghost Autonomy Inc" and "Mercedes Benz" (they should no longer have commas).
-- Run `ruff` and `mypy`.
+### 3. Update `src/av_collisions/main.py`
+- Update `process_single_report` to receive the width and height from `extract_section_5`.
+- Pass these dimensions to `post_to_bluesky`.
+
+## Verification
+- Run `uv run ruff check` and `uv run mypy` to ensure all signatures match.
+- Run a local test with `--url` to ensure the logic still functions correctly.
