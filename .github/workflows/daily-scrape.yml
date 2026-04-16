@@ -26,6 +26,9 @@ jobs:
 
       - name: Run scraper
         run: uv run src/av_collisions/main.py
+        env:
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5

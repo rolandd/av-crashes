@@ -1,58 +1,37 @@
-# AV Collisions Extractor Plan
+# Bluesky Integration Plan
 
 ## Objective
-Automate the daily extraction of collision reports from the CA DMV Autonomous Vehicles portal. The script will fetch the DMV page, identify new collision report PDFs, extract "Section 5 - Accident Details" as both an image and text using PyMuPDF, and update a checked-in state file. The process is orchestrated via a modular Python script managed by `uv` and runs daily using GitHub Actions.
+Update the `av-collisions` scraper to automatically post new autonomous vehicle collision reports to Bluesky. The post will include the company name, date, autonomous mode status, a link to the original PDF, and an image of the report's Section 5 with extracted text as alt text.
 
-## Project Structure
-- `.github/workflows/daily-scrape.yml`: GitHub Action for daily execution.
-- `pyproject.toml` & `uv.lock`: Project definition using `uv`.
-- `src/av_collisions/main.py`: Main orchestration script.
-- `src/av_collisions/fetcher.py`: BeautifulSoup-based HTML scraping logic.
-- `src/av_collisions/pdf_parser.py`: PyMuPDF (fitz) logic for rendering the PDF and extracting text/images.
-- `src/av_collisions/state_manager.py`: Handling `state.json` updates and reading.
-- `state.json`: A file tracking the processed collision report URLs/dates.
-- `data/images/`: Output folder for Section 5 screenshots.
-- `data/metadata/`: Companion JSON/markdown files containing the description (alt text) for each image.
+## Key Files & Context
+- `pyproject.toml`: To add the `atproto` dependency.
+- `.github/workflows/daily-scrape.yml`: To provide Bluesky credentials via GitHub Secrets.
+- `src/av_collisions/bluesky.py`: (New file) To handle Bluesky authentication, post formatting, and API interaction using the `atproto` SDK.
+- `src/av_collisions/main.py`: To integrate the Bluesky posting step after a new report is processed.
 
 ## Implementation Steps
 
-1. **Environment Setup:**
-   - Initialize the project with `uv init`.
-   - Add dependencies: `requests`, `beautifulsoup4`, `pymupdf`.
-   - Create the source directory structure.
+### 1. Update Dependencies
+- Modify `pyproject.toml` to add `atproto` to the `dependencies` list.
 
-2. **State Management (`state_manager.py`):**
-   - Implement functions to load `state.json` into a dictionary/set of processed URLs.
-   - Implement functions to save the updated state back to disk.
+### 2. Configure GitHub Action
+- Update `.github/workflows/daily-scrape.yml`.
+- In the "Run scraper" step, add `env` variables for `BLUESKY_HANDLE` and `BLUESKY_PASSWORD`, mapping them to `${{ secrets.BLUESKY_HANDLE }}` and `${{ secrets.BLUESKY_PASSWORD }}`.
 
-3. **HTML Fetcher (`fetcher.py`):**
-   - Fetch the DMV page (`https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles/autonomous-vehicle-collision-reports/`).
-   - Use BeautifulSoup to parse the HTML, identifying links ending in `.pdf` and extracting their associated dates (e.g., from link text or nearby table cells).
+### 3. Create Bluesky Posting Module (`src/av_collisions/bluesky.py`)
+- Implement a function `post_to_bluesky(url, date_text, image_path, metadata, description_text)`.
+- **Parsing**: Extract the company name and date from `date_text` (e.g., "Waymo LLC - 03/23/26"). Convert the date to `YYYY-MM-DD` format.
+- **Formatting**: Construct the post text: `"{company} {formatted_date} - autonomous mode: {status}"`. Determine the status from `metadata['autonomous_mode']`.
+- **Facets**: Use `atproto`'s rich text features to create a facet over the `"{company} {formatted_date}"` portion of the text, linking it to the original `url`.
+- **Image Upload**: Read the image from `image_path` and upload it to Bluesky as a blob. Attach the `description_text` as the image's alt text.
+- **Posting**: Authenticate using environment variables. Send the post containing the text, facets, and the image embed. Include robust error handling to prevent the main scraper loop from crashing if a post fails.
 
-4. **PDF Parser (`pdf_parser.py`):**
-   - Download the PDF from the URL.
-   - Open the PDF using `fitz` (PyMuPDF).
-   - Search for the text "SECTION 5 — ACCIDENT DETAILS - DESCRIPTION".
-   - Determine the bounding box for Section 5 and render it to a high-quality image (`.png` or `.jpg`).
-   - Extract the text from this section to serve as the alt text.
+### 4. Integrate into Main Workflow (`src/av_collisions/main.py`)
+- Import `post_to_bluesky`.
+- Within the loop over new reports, after successfully saving the image and metadata (and before marking as processed), call `post_to_bluesky`.
+- Pass the required arguments: the original URL, the raw date string, the saved image path, the extracted metadata, and the extracted section 5 description text.
 
-5. **Orchestration (`main.py`):**
-   - Load the current state.
-   - Fetch the list of available reports.
-   - Iterate over new reports:
-     - Parse the PDF to extract the Section 5 image and text.
-     - Save the image to `data/images/` using a slugified URL or date-based filename.
-     - Save a companion metadata file in `data/metadata/` with the alt text.
-     - Mark the URL as processed in the state.
-   - Persist the updated `state.json`.
-
-6. **GitHub Action (`daily-scrape.yml`):**
-   - Set up a cron schedule (e.g., `0 8 * * *`).
-   - Checkout the repository.
-   - Use `astral-sh/setup-uv` to install `uv` and Python.
-   - Run `uv run src/av_collisions/main.py`.
-   - Use `stefanzweifel/git-auto-commit-action` (or equivalent `git` commands) to commit changes to `state.json`, `data/images/`, and `data/metadata/`.
-
-## Verification & Testing
-- Write a basic unit test (`tests/test_parser.py`) for the PDF extraction logic using a mock or downloaded test PDF.
-- Run the script locally to ensure `state.json` populates correctly and images are saved before pushing the GitHub Action.
+## Verification
+- Review the code changes to ensure the `atproto` SDK is used correctly for rich text facets and image uploads.
+- Run `uv sync` locally to ensure dependencies install correctly.
+- (Manual Verification Post-Merge) Ensure the GitHub Action runs successfully and posts to the configured Bluesky account when new reports are found.

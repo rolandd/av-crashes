@@ -8,13 +8,14 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "atproto>=0.0.58",
     "beautifulsoup4>=4.14.3",
     "pymupdf>=1.27.2.2",
     "requests>=2.33.1",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.3.4",
 ]
 
