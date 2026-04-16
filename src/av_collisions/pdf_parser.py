@@ -97,15 +97,35 @@ def extract_section_5(pdf_bytes: bytes) -> Tuple[Optional[bytes], str, Dict[str,
             bottom = page.rect.y1
 
         page_rect = page.rect
-        crop_rect = fitz.Rect(page_rect.x0, top, page_rect.x1, bottom)
+        initial_crop = fitz.Rect(page_rect.x0, top, page_rect.x1, bottom)
 
-        # Extract text from this area
-        description_text = page.get_text("text", clip=crop_rect).strip()
+        # 3. Find the actual text bounding box within the initial crop area
+        # This prevents large areas of whitespace if the description is short.
+        text_rect = fitz.Rect()
+        blocks = page.get_text("dict", clip=initial_crop)["blocks"]
+        for b in blocks:
+            if b["type"] == 0:  # text block
+                text_rect.include_rect(b["bbox"])
 
-        # Render the area to an image
+        if not text_rect.is_empty:
+            # Add some healthy padding (20pts horizontal, 10pts vertical)
+            # but keep it within the page boundaries and the initial crop
+            final_crop = fitz.Rect(
+                max(page_rect.x0, text_rect.x0 - 20),
+                max(top, text_rect.y0 - 10),
+                min(page_rect.x1, text_rect.x1 + 20),
+                min(bottom, text_rect.y1 + 10),
+            )
+        else:
+            final_crop = initial_crop
+
+        # Extract text from the initial area to ensure we don't miss anything
+        description_text = page.get_text("text", clip=initial_crop).strip()
+
+        # Render the area to an image using the refined crop
         zoom = 2.0
         mat = fitz.Matrix(zoom, zoom)
-        pix = page.get_pixmap(matrix=mat, clip=crop_rect)
+        pix = page.get_pixmap(matrix=mat, clip=final_crop)
         image_bytes = pix.tobytes("png")
 
     doc.close()
