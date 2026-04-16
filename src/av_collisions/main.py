@@ -45,7 +45,12 @@ def main():
 
     # 3. Process new reports
     newly_processed = 0
-    for url, date_text in reports:
+    for report in reports:
+        url = report["url"]
+        date_text = report["date_text"]
+        company = report["company"]
+        date = report["date"]
+
         if is_processed(state, url):
             continue
 
@@ -59,17 +64,27 @@ def main():
             if image_bytes:
                 # Save results
                 filename_base = slugify(url)
+                
+                # Add fetched info to metadata
+                extra_metadata["company"] = company
+                extra_metadata["date"] = date
+                extra_metadata["date_text"] = date_text
+
                 image_path = save_output(
                     image_bytes, description, filename_base, url, extra_metadata
                 )
 
                 # Post to Bluesky
-                post_to_bluesky(url, date_text, image_path, extra_metadata, description)
+                post_to_bluesky(
+                    url, company, date, image_path, extra_metadata, description
+                )
 
                 # Mark as processed in state
                 metadata = {
                     "url": url,
                     "date_text": date_text,
+                    "company": company,
+                    "date": date,
                     "processed_at": datetime.now().isoformat(),
                     "filename_base": filename_base,
                 }

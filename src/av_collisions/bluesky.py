@@ -1,39 +1,13 @@
 import os
 import logging
-from datetime import datetime
 from atproto import Client, models
 from typing import Dict, Any
 
 
-def parse_date_and_company(date_text: str):
-    """
-    Parses date_text like 'Waymo LLC - 03/23/26'
-    Returns (company_name, formatted_date)
-    """
-    try:
-        if " - " in date_text:
-            company, date_part = date_text.split(" - ", 1)
-            # Remove LLC, Inc, etc.
-            company = (
-                company.replace(" LLC", "")
-                .replace(" Inc.", "")
-                .replace(" Inc", "")
-                .strip()
-            )
-
-            # Parse date 03/23/26 -> 2026-03-23
-            dt = datetime.strptime(date_part.strip(), "%m/%d/%y")
-            formatted_date = dt.strftime("%Y-%m-%d")
-            return company, formatted_date
-    except Exception as e:
-        logging.error(f"Failed to parse date_text '{date_text}': {e}")
-
-    return "AV Collision", datetime.now().strftime("%Y-%m-%d")
-
-
 def post_to_bluesky(
     url: str,
-    date_text: str,
+    company: str,
+    formatted_date: str,
     image_path: str,
     metadata: Dict[str, Any],
     description_text: str,
@@ -47,8 +21,6 @@ def post_to_bluesky(
     if not handle or not password:
         logging.warning("Bluesky credentials not set. Skipping post.")
         return
-
-    company, formatted_date = parse_date_and_company(date_text)
 
     # Determine autonomous mode status
     auto_val = metadata.get("autonomous_mode", "/Off")
