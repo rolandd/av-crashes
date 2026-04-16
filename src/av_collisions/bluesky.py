@@ -27,7 +27,7 @@ def post_to_bluesky(
 
     # Build post text
     link_text = f"{company} {formatted_date}"
-    post_text = f"{link_text} - autonomous mode: {status}"
+    post_text = f"{link_text}:\n  autonomous mode: {status}"
 
     logging.info(f"Posting to Bluesky: {post_text}")
 

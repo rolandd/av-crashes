@@ -8,16 +8,24 @@ from datetime import datetime
 DMV_URL = "https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles/autonomous-vehicle-collision-reports/"
 
 
-def parse_date_and_company(date_text: str) -> Dict[str, str]:
+def parse_date_and_company(date_text: str) -> Dict[str, str] | None:
     """
     Parses date_text from DMV collision reports page.
     Handles formats like:
     - 'Waymo March 23, 2026 (PDF)'
+    - 'Waymo December 29. 2022 (PDF)'
     - 'Waymo LLC - 03/23/26'
-    Returns {'company': company_name, 'date': formatted_date}
+    Returns {'company': company_name, 'date': formatted_date} or None if not a report.
     """
+    # Skip known noise
+    lower_text = date_text.lower()
+    noise_keywords = ["submit a collision", "accident-involving-an-autonomous-vehicle", "traffic accident involving"]
+    if any(k in lower_text for k in noise_keywords):
+        return None
+
     # 1. Try "Company Month Day, Year (PDF)" format
-    match = re.search(r"^(.*?)\s+([A-Z][a-z]+)\s+(\d{1,2}),\s+(\d{4})", date_text)
+    # Allow . or , after the day
+    match = re.search(r"^(.*?)\s+([A-Z][a-z]+)\s+(\d{1,2})[.,]?\s+(\d{4})", date_text)
     if match:
         company = match.group(1).strip()
         month_str = match.group(2)
@@ -56,9 +64,11 @@ def parse_date_and_company(date_text: str) -> Dict[str, str]:
         except Exception:
             pass
 
-    # Fallback: Extract first word as company if everything else fails
-    first_word = date_text.split()[0] if date_text.split() else "AV Collision"
-    return {"company": first_word, "date": datetime.now().strftime("%Y-%m-%d")}
+    # Final check: if it looks like a report but parsing failed, we could return a fallback,
+    # but for bootstrap accuracy it's better to be strict.
+    # If the first word is a known company or the string contains a year, we might try harder,
+    # but returning None here will filter out "Autonomous Vehicle Collision Reports" etc.
+    return None
 
 
 def fetch_collision_reports() -> List[Dict[str, Any]]:
@@ -76,15 +86,16 @@ def fetch_collision_reports() -> List[Dict[str, Any]]:
     for link in soup.find_all("a", href=True):
         href = link["href"]
         if "/file/" in href and (href.endswith(".pdf/") or href.endswith("-pdf/")):
-            # Extract date if possible from link text or nearby context.
-            # Link text often looks like "Waymo LLC - 03/23/26" or similar.
             text = link.get_text(strip=True)
+
+            parsed = parse_date_and_company(text)
+            if not parsed:
+                continue
 
             # Use absolute URL
             if not href.startswith("http"):
                 href = f"https://www.dmv.ca.gov{href}"
 
-            parsed = parse_date_and_company(text)
             reports.append(
                 {
                     "url": href,
