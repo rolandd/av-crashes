@@ -1624,13 +1624,6 @@
       "processed_at": "2026-04-16T14:39:30.465657",
       "raw_title": "Nuro March 12, 2024 (PDF)"
     },
-    "https://www.dmv.ca.gov/portal/file/nuro_040326-pdf/": {
-      "bootstrapped": true,
-      "company": "Nuro",
-      "date": "2026-04-03",
-      "processed_at": "2026-04-16T14:39:30.465415",
-      "raw_title": "Nuro April 3, 2026 (PDF)"
-    },
     "https://www.dmv.ca.gov/portal/file/nuro_052224-pdf/": {
       "bootstrapped": true,
       "company": "Nuro",
@@ -2722,13 +2715,6 @@
       "date": "2021-03-31",
       "processed_at": "2026-04-16T14:39:30.465997",
       "raw_title": "Waymo March 31, 2021 (PDF)"
-    },
-    "https://www.dmv.ca.gov/portal/file/waymo_040126-pdf/": {
-      "bootstrapped": true,
-      "company": "Waymo",
-      "date": "2026-04-01",
-      "processed_at": "2026-04-16T14:39:30.465422",
-      "raw_title": "Waymo April 1, 2026 (PDF)"
     },
     "https://www.dmv.ca.gov/portal/file/waymo_040323-pdf/": {
       "bootstrapped": true,
