@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any
 import logging
+import re
 from datetime import datetime
 
 DMV_URL = "https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles/autonomous-vehicle-collision-reports/"
@@ -9,12 +10,35 @@ DMV_URL = "https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-ve
 
 def parse_date_and_company(date_text: str) -> Dict[str, str]:
     """
-    Parses date_text like 'Waymo LLC - 03/23/26'
+    Parses date_text from DMV collision reports page.
+    Handles formats like:
+    - 'Waymo March 23, 2026 (PDF)'
+    - 'Waymo LLC - 03/23/26'
     Returns {'company': company_name, 'date': formatted_date}
     """
-    try:
-        if " - " in date_text:
+    # 1. Try "Company Month Day, Year (PDF)" format
+    match = re.search(r"^(.*?)\s+([A-Z][a-z]+)\s+(\d{1,2}),\s+(\d{4})", date_text)
+    if match:
+        company = match.group(1).strip()
+        month_str = match.group(2)
+        day_str = match.group(3)
+        year_str = match.group(4)
+
+        try:
+            dt = datetime.strptime(f"{month_str} {day_str} {year_str}", "%B %d %Y")
+            return {
+                "company": company,
+                "date": dt.strftime("%Y-%m-%d"),
+            }
+        except ValueError:
+            pass
+
+    # 2. Try old format "Company - MM/DD/YY"
+    if " - " in date_text:
+        try:
             company, date_part = date_text.split(" - ", 1)
+            # Remove (PDF) if present in old format
+            date_part = date_part.replace("(PDF)", "").strip()
             # Remove LLC, Inc, etc.
             company = (
                 company.replace(" LLC", "")
@@ -24,13 +48,17 @@ def parse_date_and_company(date_text: str) -> Dict[str, str]:
             )
 
             # Parse date 03/23/26 -> 2026-03-23
-            dt = datetime.strptime(date_part.strip(), "%m/%d/%y")
-            formatted_date = dt.strftime("%Y-%m-%d")
-            return {"company": company, "date": formatted_date}
-    except Exception as e:
-        logging.error(f"Failed to parse date_text '{date_text}': {e}")
+            dt = datetime.strptime(date_part, "%m/%d/%y")
+            return {
+                "company": company,
+                "date": dt.strftime("%Y-%m-%d"),
+            }
+        except Exception:
+            pass
 
-    return {"company": "AV Collision", "date": datetime.now().strftime("%Y-%m-%d")}
+    # Fallback: Extract first word as company if everything else fails
+    first_word = date_text.split()[0] if date_text.split() else "AV Collision"
+    return {"company": first_word, "date": datetime.now().strftime("%Y-%m-%d")}
 
 
 def fetch_collision_reports() -> List[Dict[str, Any]]:

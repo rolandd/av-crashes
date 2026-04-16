@@ -117,8 +117,15 @@ def main() -> None:
         newly_marked = 0
         for report in reports:
             url = report["url"]
-            # Update if not processed OR if missing structured data
-            if not is_processed(state, url) or "company" not in state["processed_urls"][url]:
+            # Update if not processed OR if missing structured data OR if using fallback company
+            existing_meta = state.get("processed_urls", {}).get(url, {})
+            needs_update = (
+                not is_processed(state, url) 
+                or "company" not in existing_meta 
+                or existing_meta.get("company") == "AV Collision"
+            )
+            
+            if needs_update:
                 metadata = {
                     "raw_title": report["raw_title"],
                     "company": report["company"],
