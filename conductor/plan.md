@@ -1,31 +1,56 @@
-# Type Annotations and Linting Tooling Plan
+# CLI Modes and Storage Refactor Plan
 
 ## Objective
-Enhance project maintainability by fully typing the Python codebase and adding `ruff` (for linting and formatting) and `mypy` (for strict static type checking) as development dependencies. 
+Update the AV Collision scraper to support a "bootstrap" mode for initializing state, a "local test" mode for processing specific URLs, and eliminate the persistent storage of generated images and metadata in the `data/` directory during normal execution.
 
 ## Key Files & Context
-- `pyproject.toml`: To add `ruff` and `mypy` as dev dependencies.
-- `src/av_collisions/main.py`: Missing `-> None` on `main()`, etc.
-- `src/av_collisions/fetcher.py`: Has types but can be refined.
-- `src/av_collisions/bluesky.py`: Missing return types (e.g. `-> None`).
-- `src/av_collisions/pdf_parser.py`: Existing types can be audited.
-- `src/av_collisions/state_manager.py`: Mostly typed, audit for completeness.
+- `src/av_collisions/main.py`: Needs `argparse` integration, logic for the new modes, and refactoring to handle temporary image storage for Bluesky.
+- `src/av_collisions/pdf_parser.py`: Needs updates to how `save_output` is used, potentially modifying it to support outputting to the current directory or a temporary directory.
+- `src/av_collisions/bluesky.py`: Needs to handle posting from temporary files.
+- `.github/workflows/daily-scrape.yml`: Needs to be updated to no longer commit files in the `data/` directory.
 
 ## Implementation Steps
 
-### 1. Update Dependencies
-- Modify `pyproject.toml` to add `ruff` and `mypy` to the `[dependency-groups] dev` list.
-- Run `uv sync` or let the environment pick up the changes if using `uv run`.
+### 1. Refactor PDF Output Handling (`src/av_collisions/pdf_parser.py`)
+- Modify `save_output` to accept a destination directory rather than hardcoding `data/images` and `data/metadata`.
+- Alternatively, return the `image_bytes` and let `main.py` handle writing it to disk. (Currently, `extract_section_5` already returns `image_bytes`). We can simplify the "save" step in `main.py`.
 
-### 2. Add Type Annotations
-- Audit all functions in `src/av_collisions/` and ensure they have full type signatures for arguments and return values (e.g. adding `-> None` to functions that do not return).
-- Import `typing` modules where necessary (`List`, `Dict`, `Any`, `Optional`, `Tuple`).
+### 2. Implement CLI Arguments (`src/av_collisions/main.py`)
+- Import `argparse`.
+- Add `--bootstrap`: A boolean flag to run the bootstrap mode.
+- Add `--url`: An optional string argument to run the local test mode for a specific report URL.
 
-### 3. Run Formatters and Linters
-- Execute `uv run ruff format src/av_collisions/` to ensure a consistent code style.
-- Execute `uv run ruff check --fix src/av_collisions/` to automatically fix any basic linting errors.
-- Execute `uv run mypy src/av_collisions/` to enforce strict static typing and resolve any issues that arise.
+### 3. Implement Bootstrap Mode
+- When `--bootstrap` is passed:
+  - Fetch all reports from the DMV.
+  - Iterate through them.
+  - If a report is not in `state.json`, mark it as processed with basic metadata (url, date_text, company, date, processed_at).
+  - Do NOT download the PDFs or post to Bluesky.
+  - Save the updated `state.json`.
 
-## Verification & Testing
-- Ensure that `uv run ruff check` and `uv run mypy` both exit with status code `0` after the changes are applied.
-- Ensure the scraper can still run without runtime type errors.
+### 4. Implement Local Test Mode
+- When `--url <URL>` is passed:
+  - Bypass the DMV fetch.
+  - Call `download_pdf` and `extract_section_5` for the provided URL.
+  - Save the extracted image (`.png`) and metadata (`.json`) directly to the current working directory (`.`).
+  - Do NOT update `state.json`.
+  - Do NOT post to Bluesky.
+
+### 5. Refactor Normal Mode (Default)
+- When no flags are passed:
+  - Fetch reports from the DMV.
+  - For each new report:
+    - Download and parse the PDF.
+    - Write the image to a *temporary file* (using the `tempfile` module).
+    - Post to Bluesky using the temporary image file.
+    - Update `state.json`.
+    - Do NOT write to `data/images` or `data/metadata`.
+
+### 6. Update GitHub Action (`.github/workflows/daily-scrape.yml`)
+- Modify the `Commit and push changes` step.
+- Update the `file_pattern` to only include `state.json`. Remove the references to `data/images/*.png` and `data/metadata/*.json`.
+
+## Verification
+- Test `--bootstrap` locally to ensure it populates `state.json` without errors.
+- Test `--url <some_pdf_url>` to ensure it writes the `.png` and `.json` to the current directory.
+- Test a normal run to ensure it uses temporary files and correctly processes state.

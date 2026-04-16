@@ -118,18 +118,16 @@ def save_output(
     filename_base: str,
     url: str,
     extra_metadata: Dict[str, Any],
-    image_dir: str = "data/images",
-    metadata_dir: str = "data/metadata",
+    output_dir: str = ".",
 ) -> str:
     """Saves the extracted image and description to disk."""
-    os.makedirs(image_dir, exist_ok=True)
-    os.makedirs(metadata_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
-    image_path = os.path.join(image_dir, f"{filename_base}.png")
+    image_path = os.path.join(output_dir, f"{filename_base}.png")
     with open(image_path, "wb") as f:
         f.write(image_bytes)
 
-    metadata_path = os.path.join(metadata_dir, f"{filename_base}.json")
+    metadata_path = os.path.join(output_dir, f"{filename_base}.json")
 
     full_metadata = {
         "description": description,

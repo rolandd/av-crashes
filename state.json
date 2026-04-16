@@ -1392,6 +1392,14 @@
       "processed_at": "2026-04-10T16:10:22.001528",
       "url": "https://www.dmv.ca.gov/portal/file/nuro_031224-pdf/"
     },
+    "https://www.dmv.ca.gov/portal/file/nuro_040326-pdf/": {
+      "bootstrapped": true,
+      "company": "AV Collision",
+      "date": "2026-04-16",
+      "date_text": "Nuro April 3, 2026 (PDF)",
+      "processed_at": "2026-04-16T13:23:07.971212",
+      "url": "https://www.dmv.ca.gov/portal/file/nuro_040326-pdf/"
+    },
     "https://www.dmv.ca.gov/portal/file/nuro_052224-pdf/": {
       "date_text": "Nuro May 22, 2024 (PDF)",
       "filename_base": "nuro_052224",
@@ -2322,11 +2330,27 @@
       "processed_at": "2026-04-10T16:10:17.609851",
       "url": "https://www.dmv.ca.gov/portal/file/waymo_033024-pdf/"
     },
+    "https://www.dmv.ca.gov/portal/file/waymo_033026-pdf/": {
+      "bootstrapped": true,
+      "company": "AV Collision",
+      "date": "2026-04-16",
+      "date_text": "Waymo March 30, 2026 (PDF)",
+      "processed_at": "2026-04-16T13:23:07.971223",
+      "url": "https://www.dmv.ca.gov/portal/file/waymo_033026-pdf/"
+    },
     "https://www.dmv.ca.gov/portal/file/waymo_033121-pdf/": {
       "date_text": "Waymo March 31, 2021 (PDF)",
       "filename_base": "waymo_033121",
       "processed_at": "2026-04-10T16:15:23.049104",
       "url": "https://www.dmv.ca.gov/portal/file/waymo_033121-pdf/"
+    },
+    "https://www.dmv.ca.gov/portal/file/waymo_040126-pdf/": {
+      "bootstrapped": true,
+      "company": "AV Collision",
+      "date": "2026-04-16",
+      "date_text": "Waymo April 1, 2026 (PDF)",
+      "processed_at": "2026-04-16T13:23:07.971220",
+      "url": "https://www.dmv.ca.gov/portal/file/waymo_040126-pdf/"
     },
     "https://www.dmv.ca.gov/portal/file/waymo_040323-pdf/": {
       "date_text": "Waymo April 3, 2023 (PDF)",
@@ -2729,6 +2753,14 @@
       "filename_base": "waymo_070624_a",
       "processed_at": "2026-04-10T16:10:01.211641",
       "url": "https://www.dmv.ca.gov/portal/file/waymo_070624_a-pdf/"
+    },
+    "https://www.dmv.ca.gov/portal/file/waymo_070624_b-pdf/": {
+      "bootstrapped": true,
+      "company": "AV Collision",
+      "date": "2026-04-16",
+      "date_text": "Waymo July 6, 2024 (B) (PDF)",
+      "processed_at": "2026-04-16T13:23:07.971305",
+      "url": "https://www.dmv.ca.gov/portal/file/waymo_070624_b-pdf/"
     },
     "https://www.dmv.ca.gov/portal/file/waymo_070823-pdf/": {
       "date_text": "Waymo July 8, 2023 (PDF)",
@@ -4211,6 +4243,14 @@
       "filename_base": "zoox_040425",
       "processed_at": "2026-04-10T16:08:58.233538",
       "url": "https://www.dmv.ca.gov/portal/file/zoox_040425-pdf/"
+    },
+    "https://www.dmv.ca.gov/portal/file/zoox_040425_narrative-pdf/": {
+      "bootstrapped": true,
+      "company": "AV Collision",
+      "date": "2026-04-16",
+      "date_text": "Zoox April 4, 2025 Narrative (PDF)",
+      "processed_at": "2026-04-16T13:23:07.971280",
+      "url": "https://www.dmv.ca.gov/portal/file/zoox_040425_narrative-pdf/"
     },
     "https://www.dmv.ca.gov/portal/file/zoox_040622-pdf/": {
       "date_text": "Zoox April 6, 2022 (PDF)",
