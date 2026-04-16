@@ -134,7 +134,6 @@ def main() -> None:
             )
 
             if needs_update:
-
                 metadata = {
                     "raw_title": report["raw_title"],
                     "company": report["company"],

@@ -1,6 +1,6 @@
 import os
 import logging
-from atproto import Client, models  # type: ignore[import-untyped]
+from atproto import Client, models, client_utils  # type: ignore[import-untyped]
 from typing import Dict, Any
 
 
@@ -25,11 +25,12 @@ def post_to_bluesky(
     # Determine autonomous mode status
     status = "yes" if metadata.get("autonomous_mode") else "no"
 
-    # Build post text
-    link_text = f"{company} {formatted_date}"
-    post_text = f"{link_text}:\n  autonomous mode: {status}"
+    # Build post text using TextBuilder for robust facets
+    text_builder = client_utils.TextBuilder()
+    text_builder.link(f"{company} {formatted_date}", url)
+    text_builder.text(f":\n  autonomous mode: {status}")
 
-    logging.info(f"Posting to Bluesky: {post_text}")
+    logging.info(f"Posting to Bluesky: {text_builder.build_text()}")
 
     try:
         client = Client()
@@ -38,16 +39,7 @@ def post_to_bluesky(
         # Upload image
         upload = client.upload_blob(image_bytes)
 
-        # Create facets for the link
-        # The link_text is at the start of post_text
-        facet = models.AppBskyRichtextFacet.Main(
-            index=models.AppBskyRichtextFacet.ByteStartEnd(
-                byteStart=0, byteEnd=len(link_text.encode("utf-8"))
-            ),
-            features=[models.AppBskyRichtextFacet.Link(uri=url)],
-        )
-
-        # Create the post
+        # Create the post embed
         embed = models.AppBskyEmbedImages.Main(
             images=[
                 models.AppBskyEmbedImages.Image(
@@ -59,7 +51,7 @@ def post_to_bluesky(
             ]
         )
 
-        client.send_post(text=post_text, facets=[facet], embed=embed)
+        client.send_post(text=text_builder, embed=embed)
         logging.info("Successfully posted to Bluesky.")
 
     except Exception as e:
