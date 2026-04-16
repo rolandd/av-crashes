@@ -113,13 +113,13 @@ def main() -> None:
         return
 
     if args.bootstrap:
-        logging.info("Running in bootstrap mode. Filling state without processing.")
+        logging.info("Running in bootstrap mode. Filling/updating state.")
         newly_marked = 0
         for report in reports:
             url = report["url"]
-            if not is_processed(state, url):
+            # Update if not processed OR if missing structured data
+            if not is_processed(state, url) or "company" not in state["processed_urls"][url]:
                 metadata = {
-                    "url": url,
                     "raw_title": report["raw_title"],
                     "company": report["company"],
                     "date": report["date"],
@@ -130,10 +130,10 @@ def main() -> None:
                 newly_marked += 1
 
         if newly_marked > 0:
-            logging.info(f"Bootstrapped {newly_marked} reports. Saving state.")
+            logging.info(f"Bootstrapped/Updated {newly_marked} reports. Saving state.")
             save_state(state)
         else:
-            logging.info("No new reports to bootstrap.")
+            logging.info("No new or missing data to bootstrap.")
         return
 
     # 3. Normal Mode: Process new reports
@@ -146,12 +146,10 @@ def main() -> None:
         if process_single_report(report, post=True):
             # Mark as processed in state
             metadata = {
-                "url": url,
                 "raw_title": report["raw_title"],
                 "company": report["company"],
                 "date": report["date"],
                 "processed_at": datetime.now().isoformat(),
-                "slug": slugify(url),
             }
             mark_processed(state, url, metadata)
             newly_processed += 1
