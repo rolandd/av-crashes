@@ -1,25 +1,37 @@
-# Bluesky Refactoring Plan
+# Data Schema Refactor Plan
 
 ## Objective
-Update the `post_to_bluesky` function and its caller to accept and pass image data directly as bytes, eliminating the need to write temporary files to disk before uploading to Bluesky.
+Update the internal metadata schema to use more accurate and standard field names:
+1. Rename `date_text` to `raw_title`.
+2. Rename `filename_base` to `slug`.
+
+This involves updating the source code and migrating the existing `state.json` file.
 
 ## Key Files & Context
-- `src/av_collisions/bluesky.py`: The `post_to_bluesky` function currently takes an `image_path` string and reads the file.
-- `src/av_collisions/main.py`: The `process_single_report` function currently writes the `image_bytes` to a temporary file before calling `post_to_bluesky`.
+- `src/av_collisions/fetcher.py`: Where `date_text` is first parsed.
+- `src/av_collisions/main.py`: Where the metadata is constructed and passed.
+- `src/av_collisions/pdf_parser.py`: Where `filename_base` is used to generate filenames.
+- `state.json`: The historical record that needs to be migrated.
 
 ## Implementation Steps
 
-### 1. Refactor `src/av_collisions/bluesky.py`
-- Modify the signature of `post_to_bluesky`. Change `image_path: str` to `image_bytes: bytes`.
-- Remove the `with open(image_path, "rb") as f:` block.
-- Update the `client.upload_blob` call to use the passed `image_bytes` directly instead of `img_data`.
+### 1. Refactor `src/av_collisions/fetcher.py`
+- Update `fetch_collision_reports()` to use the key `raw_title` instead of `date_text` in its returned list of dicts.
 
-### 2. Refactor `src/av_collisions/main.py`
-- Remove the `import tempfile` line and the `import os` if it becomes completely unused (though it's still used for `os.makedirs` in `pdf_parser` and `os.path.exists` isn't needed here anymore, but `os` might still be used for other things. Wait, `main.py` uses `os.makedirs`? No, `main.py` uses `os.environ`? No, `main.py` uses `os.makedirs` at the top? Wait, the latest `main.py` doesn't have `os.makedirs("data/images")` anymore. Let's just remove `tempfile` and the specific `os` calls for tmp paths).
-- In `process_single_report`, remove the `with tempfile.NamedTemporaryFile(...) as tmp:` block.
-- Update the `post_to_bluesky` call to directly pass `image_bytes` instead of the temporary file path.
-- Remove the `try...finally` block that cleans up the temporary file.
+### 2. Refactor `src/av_collisions/pdf_parser.py`
+- Update `save_output()` function signature: rename `filename_base: str` to `slug: str`.
+- Update the internal logic to use `slug` to generate `.png` and `.json` filenames.
+
+### 3. Refactor `src/av_collisions/main.py`
+- Update all instances of `date_text` to `raw_title`.
+- Update all instances of `filename_base` to `slug`.
+- Ensure `process_single_report` and the `main()` loop pass and store the new keys.
+
+### 4. Migrate `state.json`
+- Use a `sed` command or a temporary Python script to rename the keys in `state.json` for all processed entries.
+- Command for `sed`: `sed -i 's/"date_text":/"raw_title":/g' state.json` and `sed -i 's/"filename_base":/"slug":/g' state.json`.
 
 ## Verification
-- Run `uv run ruff check src/av_collisions` and `uv run mypy src/av_collisions` to ensure the type signatures are correct and there are no linting errors.
-- (Optional) Test locally with `--url` to ensure it still works, although `--url` doesn't post to Bluesky anyway.
+- Run `uv run ruff check src/av_collisions` and `uv run mypy src/av_collisions` to ensure all type signatures and calls are correct.
+- Perform a manual check of `state.json` to verify the keys have been renamed.
+- Run the scraper with `--bootstrap` (it should identify that URLs are already processed because `is_processed` only checks for URL presence in the top-level keys, but the values inside should be updated).

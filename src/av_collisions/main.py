@@ -32,11 +32,11 @@ def process_single_report(
 ) -> bool:
     """Processes a single report: downloads, parses, and optionally posts."""
     url = report["url"]
-    date_text = report["date_text"]
+    raw_title = report["raw_title"]
     company = report["company"]
     date = report["date"]
 
-    logging.info(f"Processing report: {url} ({date_text})")
+    logging.info(f"Processing report: {url} ({raw_title})")
 
     try:
         # Download and parse PDF
@@ -44,18 +44,18 @@ def process_single_report(
         image_bytes, description, extra_metadata = extract_section_5(pdf_bytes)
 
         if image_bytes:
-            filename_base = slugify(url)
+            slug = slugify(url)
             # Add fetched info to metadata
             extra_metadata["company"] = company
             extra_metadata["date"] = date
-            extra_metadata["date_text"] = date_text
+            extra_metadata["raw_title"] = raw_title
 
             if save_dir:
                 # Save to specific directory (e.g., current dir for local test)
                 save_output(
                     image_bytes,
                     description,
-                    filename_base,
+                    slug,
                     url,
                     extra_metadata,
                     save_dir,
@@ -97,7 +97,7 @@ def main() -> None:
         # Local test mode: bypass state, save to current dir, don't post
         report = {
             "url": args.url,
-            "date_text": "Local Test Mode",
+            "raw_title": "Local Test Mode",
             "company": "LocalTest",
             "date": datetime.now().strftime("%Y-%m-%d"),
         }
@@ -120,7 +120,7 @@ def main() -> None:
             if not is_processed(state, url):
                 metadata = {
                     "url": url,
-                    "date_text": report["date_text"],
+                    "raw_title": report["raw_title"],
                     "company": report["company"],
                     "date": report["date"],
                     "processed_at": datetime.now().isoformat(),
@@ -147,11 +147,11 @@ def main() -> None:
             # Mark as processed in state
             metadata = {
                 "url": url,
-                "date_text": report["date_text"],
+                "raw_title": report["raw_title"],
                 "company": report["company"],
                 "date": report["date"],
                 "processed_at": datetime.now().isoformat(),
-                "filename_base": slugify(url),
+                "slug": slugify(url),
             }
             mark_processed(state, url, metadata)
             newly_processed += 1

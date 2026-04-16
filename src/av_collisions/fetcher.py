@@ -36,7 +36,7 @@ def parse_date_and_company(date_text: str) -> Dict[str, str]:
 def fetch_collision_reports() -> List[Dict[str, Any]]:
     """
     Fetches the DMV collision reports page and parses out PDF URLs and their dates.
-    Returns a list of dicts containing {url, date_text, company, date}.
+    Returns a list of dicts containing {url, raw_title, company, date}.
     """
     logging.info(f"Fetching DMV page: {DMV_URL}")
     response = requests.get(DMV_URL, timeout=30)
@@ -60,7 +60,7 @@ def fetch_collision_reports() -> List[Dict[str, Any]]:
             reports.append(
                 {
                     "url": href,
-                    "date_text": text,
+                    "raw_title": text,
                     "company": parsed["company"],
                     "date": parsed["date"],
                 }

@@ -115,7 +115,7 @@ def extract_section_5(pdf_bytes: bytes) -> Tuple[Optional[bytes], str, Dict[str,
 def save_output(
     image_bytes: bytes,
     description: str,
-    filename_base: str,
+    slug: str,
     url: str,
     extra_metadata: Dict[str, Any],
     output_dir: str = ".",
@@ -123,15 +123,15 @@ def save_output(
     """Saves the extracted image and description to disk."""
     os.makedirs(output_dir, exist_ok=True)
 
-    image_path = os.path.join(output_dir, f"{filename_base}.png")
+    image_path = os.path.join(output_dir, f"{slug}.png")
     with open(image_path, "wb") as f:
         f.write(image_bytes)
 
-    metadata_path = os.path.join(output_dir, f"{filename_base}.json")
+    metadata_path = os.path.join(output_dir, f"{slug}.json")
 
     full_metadata = {
         "description": description,
-        "filename": f"{filename_base}.png",
+        "filename": f"{slug}.png",
         "original_url": url,
         **extra_metadata,
     }
