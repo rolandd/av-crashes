@@ -800,9 +800,9 @@
     },
     "https://www.dmv.ca.gov/portal/file/cruise_061723-pdf/": {
       "bootstrapped": true,
-      "company": "Cruise,",
+      "company": "Cruise",
       "date": "2023-06-17",
-      "processed_at": "2026-04-16T14:39:30.465728",
+      "processed_at": "2026-04-16T14:50:51.477803",
       "raw_title": "Cruise, June 17, 2023 (1) (PDF)"
     },
     "https://www.dmv.ca.gov/portal/file/cruise_06242023-pdf/": {
@@ -1136,9 +1136,9 @@
     },
     "https://www.dmv.ca.gov/portal/file/ghostautonomy_08142023-pdf/": {
       "bootstrapped": true,
-      "company": "Ghost Autonomy Inc,",
+      "company": "Ghost Autonomy Inc",
       "date": "2023-08-14",
-      "processed_at": "2026-04-16T14:39:30.465705",
+      "processed_at": "2026-04-16T14:50:51.477791",
       "raw_title": "Ghost Autonomy Inc, August 14, 2023 (PDF)"
     },
     "https://www.dmv.ca.gov/portal/file/gm-cruise-collision-report-april-10-2019-1-pdf/": {
@@ -1577,9 +1577,9 @@
     },
     "https://www.dmv.ca.gov/portal/file/mercedes_benz_11292023-pdf/": {
       "bootstrapped": true,
-      "company": "Mercedes Benz,",
+      "company": "Mercedes Benz",
       "date": "2023-11-29",
-      "processed_at": "2026-04-16T14:39:30.465674",
+      "processed_at": "2026-04-16T14:50:51.477766",
       "raw_title": "Mercedes Benz, November 29, 2023 (PDF)"
     },
     "https://www.dmv.ca.gov/portal/file/mercedesbenz_042623-pdf/": {

@@ -1,28 +1,26 @@
-# Fetcher and Parser Refinement Plan
+# Company Name Cleanup and Force Bootstrap Plan
 
 ## Objective
-1. Improve the robustness of `parse_date_and_company` to handle variations in the DMV link text format (like `.` instead of `,`).
-2. Filter out noisy links (like "Submit a collision report") that are not actual reports.
-3. Update `state.json` to correct the mis-parsed entries.
+Fix the remaining trailing commas in `state.json` by making the company cleanup logic more robust and forcing an update in the bootstrap mode when the parsed data differs from the existing state.
 
 ## Key Files & Context
-- `src/av_collisions/fetcher.py`: The `parse_date_and_company` regex and the `fetch_collision_reports` loop.
-- `src/av_collisions/main.py`: The `--bootstrap` logic for updating state.
+- `src/av_collisions/fetcher.py`: Contains `clean_company_name`.
+- `src/av_collisions/main.py`: Contains the bootstrap update condition.
 
 ## Implementation Steps
 
-### 1. Refine `parse_date_and_company` (`src/av_collisions/fetcher.py`)
-- Update the regex to handle both `.` and `,` as delimiters after the day.
-- Return `None` for the date if it's truly unparseable, rather than falling back to `datetime.now()`. This allows the caller to identify non-report links.
-- Add an explicit check to exclude common "form" links like "Submit a collision report" or "Autonomous Vehicle Collision Reports".
+### 1. Robust Cleanup (`src/av_collisions/fetcher.py`)
+- Update `clean_company_name` to use a loop or more comprehensive `rstrip` to remove trailing commas and whitespace repeatedly until none remain.
+- Example: `"Ghost Autonomy Inc, "` -> `"Ghost Autonomy Inc"`
 
-### 2. Update `fetch_collision_reports` (`src/av_collisions/fetcher.py`)
-- Skip any links that `parse_date_and_company` identifies as invalid or noise.
+### 2. Aggressive Bootstrap Update (`src/av_collisions/main.py`)
+- Update the `needs_update` condition in the bootstrap loop.
+- Force an update if:
+    - `existing_meta.get("company") != report["company"]`
+    - `existing_meta.get("date") != report["date"]`
+- This ensures that improvements to the parser logic are immediately reflected in `state.json` when running with `--bootstrap`.
 
-### 3. Update Bootstrap logic (`src/av_collisions/main.py`)
-- Make the `needs_update` logic more aggressive: update if the current date in state is today's date (which is a sign of a parsing failure) and the newly parsed date is different.
-
-## Verification
+### 3. Verification
 - Run `uv run av-collisions --bootstrap`.
-- Verify that `state.json` no longer contains entries with "Submit" as the company.
-- Verify that entries with titles like "Waymo December 29. 2022 (PDF)" now have the correct date "2022-12-29" and company "Waymo".
+- Check `state.json` for "Ghost Autonomy Inc" and "Mercedes Benz" (they should no longer have commas).
+- Run `ruff` and `mypy`.

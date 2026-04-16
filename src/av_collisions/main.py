@@ -118,7 +118,6 @@ def main() -> None:
     if args.bootstrap:
         logging.info("Running in bootstrap mode. Filling/updating state.")
         newly_marked = 0
-        today_str = datetime.now().strftime("%Y-%m-%d")
 
         for report in reports:
             url = report["url"]
@@ -126,20 +125,16 @@ def main() -> None:
 
             # Update if:
             # 1. Not in state
-            # 2. Missing company info
-            # 3. Uses fallback "AV Collision"
-            # 4. Has today's date (indicating fallback from previous run) but report is older
+            # 2. Any parsed field (company, date, raw_title) has changed
             needs_update = (
                 not is_processed(state, url)
-                or "company" not in existing_meta
-                or existing_meta.get("company") == "AV Collision"
-                or (
-                    existing_meta.get("date") == today_str
-                    and report["date"] != today_str
-                )
+                or existing_meta.get("company") != report["company"]
+                or existing_meta.get("date") != report["date"]
+                or existing_meta.get("raw_title") != report["raw_title"]
             )
 
             if needs_update:
+
                 metadata = {
                     "raw_title": report["raw_title"],
                     "company": report["company"],

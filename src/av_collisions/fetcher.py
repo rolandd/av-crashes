@@ -8,6 +8,14 @@ from datetime import datetime
 DMV_URL = "https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles/autonomous-vehicle-collision-reports/"
 
 
+def clean_company_name(name: str) -> str:
+    """Cleans up company names, removing trailing commas and whitespace."""
+    # Repeatedly strip trailing commas and whitespace
+    while name.endswith(",") or name.endswith(" "):
+        name = name.rstrip(", ")
+    return name.strip()
+
+
 def parse_date_and_company(date_text: str) -> Dict[str, str] | None:
     """
     Parses date_text from DMV collision reports page.
@@ -31,7 +39,7 @@ def parse_date_and_company(date_text: str) -> Dict[str, str] | None:
     # Allow . or , after the day
     match = re.search(r"^(.*?)\s+([A-Z][a-z]+)\s+(\d{1,2})[.,]?\s+(\d{4})", date_text)
     if match:
-        company = match.group(1).strip()
+        company = clean_company_name(match.group(1))
         month_str = match.group(2)
         day_str = match.group(3)
         year_str = match.group(4)
@@ -48,16 +56,17 @@ def parse_date_and_company(date_text: str) -> Dict[str, str] | None:
     # 2. Try old format "Company - MM/DD/YY"
     if " - " in date_text:
         try:
-            company, date_part = date_text.split(" - ", 1)
+            company_part, date_part = date_text.split(" - ", 1)
             # Remove (PDF) if present in old format
             date_part = date_part.replace("(PDF)", "").strip()
             # Remove LLC, Inc, etc.
             company = (
-                company.replace(" LLC", "")
+                company_part.replace(" LLC", "")
                 .replace(" Inc.", "")
                 .replace(" Inc", "")
                 .strip()
             )
+            company = clean_company_name(company)
 
             # Parse date 03/23/26 -> 2026-03-23
             dt = datetime.strptime(date_part, "%m/%d/%y")
@@ -70,8 +79,6 @@ def parse_date_and_company(date_text: str) -> Dict[str, str] | None:
 
     # Final check: if it looks like a report but parsing failed, we could return a fallback,
     # but for bootstrap accuracy it's better to be strict.
-    # If the first word is a known company or the string contains a year, we might try harder,
-    # but returning None here will filter out "Autonomous Vehicle Collision Reports" etc.
     return None
 
 
