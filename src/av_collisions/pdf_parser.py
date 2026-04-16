@@ -42,24 +42,24 @@ def extract_section_5(pdf_bytes: bytes) -> Tuple[Optional[bytes], str, Dict[str,
         page = doc[found_page]
 
         # 1. Extract Checkbox Values
-        # Pre-initialize with /Off as per user expectation
-        extra_metadata["autonomous_mode"] = "/Off"
-        extra_metadata["conventional_mode"] = "/Off"
+        # Pre-initialize with False
+        extra_metadata["autonomous_mode"] = False
+        extra_metadata["conventional_mode"] = False
 
         for widget in page.widgets():
             field_name = widget.field_name
             field_value = widget.field_value
 
-            # Normalize field_value: empty string is /Off, anything else is checked
-            val = field_value if field_value else "/Off"
+            # If field_value is set and not /Off, it is checked
+            is_checked = bool(field_value and field_value != "/Off")
 
             label = (widget.field_label or "").lower()
             name = (field_name or "").lower()
 
             if "autonomous mode" in label or "autonomous_mode" in name:
-                extra_metadata["autonomous_mode"] = val
+                extra_metadata["autonomous_mode"] = is_checked
             elif "conventional mode" in label or "conventional_mode" in name:
-                extra_metadata["conventional_mode"] = val
+                extra_metadata["conventional_mode"] = is_checked
 
         # 2. Define the area to crop
         assert header_rect is not None

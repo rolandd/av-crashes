@@ -29,10 +29,10 @@ def process_single_report(
     report: Dict[str, Any],
     post: bool = True,
     save_dir: str | None = None,
-) -> str | None:
+) -> bool | None:
     """
     Processes a single report: downloads, parses, and optionally posts.
-    Returns the autonomous_mode status string if successful, else None.
+    Returns the autonomous_mode status boolean if successful, else None.
     """
     url = report["url"]
     raw_title = report["raw_title"]
@@ -69,7 +69,7 @@ def process_single_report(
                 post_to_bluesky(
                     url, company, date, image_bytes, extra_metadata, description
                 )
-            return str(extra_metadata.get("autonomous_mode", "/Off"))
+            return bool(extra_metadata.get("autonomous_mode"))
         else:
             logging.warning(f"Could not find Section 5 in PDF: {url}")
             return None
@@ -118,14 +118,22 @@ def main() -> None:
     if args.bootstrap:
         logging.info("Running in bootstrap mode. Filling/updating state.")
         newly_marked = 0
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
         for report in reports:
             url = report["url"]
-            # Update if not processed OR if missing structured data OR if using fallback company
             existing_meta = state.get("processed_urls", {}).get(url, {})
+            
+            # Update if:
+            # 1. Not in state
+            # 2. Missing company info
+            # 3. Uses fallback "AV Collision"
+            # 4. Has today's date (indicating fallback from previous run) but report is older
             needs_update = (
                 not is_processed(state, url) 
                 or "company" not in existing_meta 
                 or existing_meta.get("company") == "AV Collision"
+                or (existing_meta.get("date") == today_str and report["date"] != today_str)
             )
             
             if needs_update:
@@ -138,6 +146,19 @@ def main() -> None:
                 }
                 mark_processed(state, url, metadata)
                 newly_marked += 1
+
+        # Optional: Remove entries from state.json that are no longer on the DMV site
+        # This keeps the bootstrap clean if we want a 1:1 mapping.
+        # But we might want to keep history. Let's just filter out the "Submit" ones manually if they linger.
+        # Actually, let's just purge known noise URLs from state if they exist.
+        noise_urls = [
+            u for u in state.get("processed_urls", {}) 
+            if "submit-a-collision" in u or "accident-involving-an-autonomous-vehicle" in u
+        ]
+        for u in noise_urls:
+            logging.info(f"Removing noise URL from state: {u}")
+            del state["processed_urls"][u]
+            newly_marked += 1
 
         if newly_marked > 0:
             logging.info(f"Bootstrapped/Updated {newly_marked} reports. Saving state.")

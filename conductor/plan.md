@@ -1,19 +1,26 @@
-# Autonomous Mode Persistence Plan
+# Autonomous Mode Boolean Normalization Plan
 
 ## Objective
-Update `state.json` to include the `autonomous_mode` status (extracted from Section 5 of the PDF) for all newly processed reports. This ensures that the state file provides a more complete picture of each report without needing to re-parse the PDF.
+Normalize the `autonomous_mode` metadata from raw PDF export strings (like `"/Autonomous"` or `"/Off"`) to standard boolean values (`true`/`false`). This makes the code and `state.json` cleaner and more intuitive.
 
 ## Key Files & Context
-- `src/av_collisions/main.py`: The `process_single_report` function extracts `extra_metadata` from the PDF, which contains the `autonomous_mode` field.
-- `state.json`: The format of processed entries will be updated.
+- `src/av_collisions/pdf_parser.py`: Where the checkbox values are extracted.
+- `src/av_collisions/bluesky.py`: Where the status text for posts is generated.
+- `src/av_collisions/main.py`: Where the value is returned and stored in state.
 
 ## Implementation Steps
 
-### 1. Update `src/av_collisions/main.py`
-- In the normal processing loop (inside `main()`), ensure the `metadata` dictionary saved to `state` includes the `autonomous_mode` value.
-- Update `process_single_report` to return the `autonomous_mode` value so it can be easily added to the state in the main loop.
+### 1. Refactor `src/av_collisions/pdf_parser.py`
+- In `extract_section_5`, initialize `autonomous_mode` and `conventional_mode` to `False`.
+- Update the widget loop: set the value to `True` if `field_value` is present and not `"/Off"`.
 
-### 2. Verification
-- Run `uv run av-collisions --url <PDF_URL>` (Local test mode doesn't update state, but ensures code still runs).
-- (Optional) Run a normal scrape or simulate a new report to verify `state.json` now includes `autonomous_mode`.
-- Run `ruff` and `mypy` checks.
+### 2. Refactor `src/av_collisions/bluesky.py`
+- Simplify the status check: `status = "yes" if metadata.get("autonomous_mode") else "no"`.
+
+### 3. Refactor `src/av_collisions/main.py`
+- Update the return type hint of `process_single_report` from `str | None` to `bool | None`.
+- The logic inside `process_single_report` and the main loop will naturally handle the boolean value.
+
+## Verification
+- Run `uv run ruff check` and `uv run mypy`.
+- Run a local test with `--url` to ensure the metadata JSON reflects the boolean change.

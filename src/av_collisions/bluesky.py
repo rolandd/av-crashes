@@ -23,8 +23,7 @@ def post_to_bluesky(
         return
 
     # Determine autonomous mode status
-    auto_val = metadata.get("autonomous_mode", "/Off")
-    status = "yes" if auto_val != "/Off" else "no"
+    status = "yes" if metadata.get("autonomous_mode") else "no"
 
     # Build post text
     link_text = f"{company} {formatted_date}"
