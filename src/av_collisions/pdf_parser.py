@@ -1,6 +1,5 @@
-import fitz  # PyMuPDF
+import fitz  # type: ignore[import-untyped]
 import requests
-import io
 import os
 import json
 from typing import Tuple, Optional, Dict, Any
@@ -63,6 +62,7 @@ def extract_section_5(pdf_bytes: bytes) -> Tuple[Optional[bytes], str, Dict[str,
                 extra_metadata["conventional_mode"] = val
 
         # 2. Define the area to crop
+        assert header_rect is not None
         top = header_rect.y1 + 5
 
         # Find the "Additional information attached" text to use as the cutoff

@@ -1,37 +1,31 @@
-# Bluesky Integration Plan
+# Type Annotations and Linting Tooling Plan
 
 ## Objective
-Update the `av-collisions` scraper to automatically post new autonomous vehicle collision reports to Bluesky. The post will include the company name, date, autonomous mode status, a link to the original PDF, and an image of the report's Section 5 with extracted text as alt text.
+Enhance project maintainability by fully typing the Python codebase and adding `ruff` (for linting and formatting) and `mypy` (for strict static type checking) as development dependencies. 
 
 ## Key Files & Context
-- `pyproject.toml`: To add the `atproto` dependency.
-- `.github/workflows/daily-scrape.yml`: To provide Bluesky credentials via GitHub Secrets.
-- `src/av_collisions/bluesky.py`: (New file) To handle Bluesky authentication, post formatting, and API interaction using the `atproto` SDK.
-- `src/av_collisions/main.py`: To integrate the Bluesky posting step after a new report is processed.
+- `pyproject.toml`: To add `ruff` and `mypy` as dev dependencies.
+- `src/av_collisions/main.py`: Missing `-> None` on `main()`, etc.
+- `src/av_collisions/fetcher.py`: Has types but can be refined.
+- `src/av_collisions/bluesky.py`: Missing return types (e.g. `-> None`).
+- `src/av_collisions/pdf_parser.py`: Existing types can be audited.
+- `src/av_collisions/state_manager.py`: Mostly typed, audit for completeness.
 
 ## Implementation Steps
 
 ### 1. Update Dependencies
-- Modify `pyproject.toml` to add `atproto` to the `dependencies` list.
+- Modify `pyproject.toml` to add `ruff` and `mypy` to the `[dependency-groups] dev` list.
+- Run `uv sync` or let the environment pick up the changes if using `uv run`.
 
-### 2. Configure GitHub Action
-- Update `.github/workflows/daily-scrape.yml`.
-- In the "Run scraper" step, add `env` variables for `BLUESKY_HANDLE` and `BLUESKY_PASSWORD`, mapping them to `${{ secrets.BLUESKY_HANDLE }}` and `${{ secrets.BLUESKY_PASSWORD }}`.
+### 2. Add Type Annotations
+- Audit all functions in `src/av_collisions/` and ensure they have full type signatures for arguments and return values (e.g. adding `-> None` to functions that do not return).
+- Import `typing` modules where necessary (`List`, `Dict`, `Any`, `Optional`, `Tuple`).
 
-### 3. Create Bluesky Posting Module (`src/av_collisions/bluesky.py`)
-- Implement a function `post_to_bluesky(url, date_text, image_path, metadata, description_text)`.
-- **Parsing**: Extract the company name and date from `date_text` (e.g., "Waymo LLC - 03/23/26"). Convert the date to `YYYY-MM-DD` format.
-- **Formatting**: Construct the post text: `"{company} {formatted_date} - autonomous mode: {status}"`. Determine the status from `metadata['autonomous_mode']`.
-- **Facets**: Use `atproto`'s rich text features to create a facet over the `"{company} {formatted_date}"` portion of the text, linking it to the original `url`.
-- **Image Upload**: Read the image from `image_path` and upload it to Bluesky as a blob. Attach the `description_text` as the image's alt text.
-- **Posting**: Authenticate using environment variables. Send the post containing the text, facets, and the image embed. Include robust error handling to prevent the main scraper loop from crashing if a post fails.
+### 3. Run Formatters and Linters
+- Execute `uv run ruff format src/av_collisions/` to ensure a consistent code style.
+- Execute `uv run ruff check --fix src/av_collisions/` to automatically fix any basic linting errors.
+- Execute `uv run mypy src/av_collisions/` to enforce strict static typing and resolve any issues that arise.
 
-### 4. Integrate into Main Workflow (`src/av_collisions/main.py`)
-- Import `post_to_bluesky`.
-- Within the loop over new reports, after successfully saving the image and metadata (and before marking as processed), call `post_to_bluesky`.
-- Pass the required arguments: the original URL, the raw date string, the saved image path, the extracted metadata, and the extracted section 5 description text.
-
-## Verification
-- Review the code changes to ensure the `atproto` SDK is used correctly for rich text facets and image uploads.
-- Run `uv sync` locally to ensure dependencies install correctly.
-- (Manual Verification Post-Merge) Ensure the GitHub Action runs successfully and posts to the configured Bluesky account when new reports are found.
+## Verification & Testing
+- Ensure that `uv run ruff check` and `uv run mypy` both exit with status code `0` after the changes are applied.
+- Ensure the scraper can still run without runtime type errors.

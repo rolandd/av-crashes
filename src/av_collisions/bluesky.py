@@ -1,6 +1,6 @@
 import os
 import logging
-from atproto import Client, models
+from atproto import Client, models  # type: ignore[import-untyped]
 from typing import Dict, Any
 
 
@@ -11,7 +11,7 @@ def post_to_bluesky(
     image_path: str,
     metadata: Dict[str, Any],
     description_text: str,
-):
+) -> None:
     """
     Posts a collision report to Bluesky.
     """

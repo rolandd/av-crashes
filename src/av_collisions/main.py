@@ -24,7 +24,7 @@ def slugify(value: str) -> str:
     return re.sub(r"[-\s]+", "-", name)
 
 
-def main():
+def main() -> None:
     """Main orchestration loop."""
     logging.info("Starting AV Collisions Scraper")
 
@@ -64,7 +64,7 @@ def main():
             if image_bytes:
                 # Save results
                 filename_base = slugify(url)
-                
+
                 # Add fetched info to metadata
                 extra_metadata["company"] = company
                 extra_metadata["date"] = date
