@@ -25,7 +25,7 @@ jobs:
         run: uv sync
 
       - name: Run scraper
-        run: uv run src/av_collisions/main.py
+        run: uv run av-collisions
         env:
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_PASSWORD: ${{ secrets.BLUESKY_PASSWORD }}
