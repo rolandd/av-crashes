@@ -1,56 +1,25 @@
-# CLI Modes and Storage Refactor Plan
+# Bluesky Refactoring Plan
 
 ## Objective
-Update the AV Collision scraper to support a "bootstrap" mode for initializing state, a "local test" mode for processing specific URLs, and eliminate the persistent storage of generated images and metadata in the `data/` directory during normal execution.
+Update the `post_to_bluesky` function and its caller to accept and pass image data directly as bytes, eliminating the need to write temporary files to disk before uploading to Bluesky.
 
 ## Key Files & Context
-- `src/av_collisions/main.py`: Needs `argparse` integration, logic for the new modes, and refactoring to handle temporary image storage for Bluesky.
-- `src/av_collisions/pdf_parser.py`: Needs updates to how `save_output` is used, potentially modifying it to support outputting to the current directory or a temporary directory.
-- `src/av_collisions/bluesky.py`: Needs to handle posting from temporary files.
-- `.github/workflows/daily-scrape.yml`: Needs to be updated to no longer commit files in the `data/` directory.
+- `src/av_collisions/bluesky.py`: The `post_to_bluesky` function currently takes an `image_path` string and reads the file.
+- `src/av_collisions/main.py`: The `process_single_report` function currently writes the `image_bytes` to a temporary file before calling `post_to_bluesky`.
 
 ## Implementation Steps
 
-### 1. Refactor PDF Output Handling (`src/av_collisions/pdf_parser.py`)
-- Modify `save_output` to accept a destination directory rather than hardcoding `data/images` and `data/metadata`.
-- Alternatively, return the `image_bytes` and let `main.py` handle writing it to disk. (Currently, `extract_section_5` already returns `image_bytes`). We can simplify the "save" step in `main.py`.
+### 1. Refactor `src/av_collisions/bluesky.py`
+- Modify the signature of `post_to_bluesky`. Change `image_path: str` to `image_bytes: bytes`.
+- Remove the `with open(image_path, "rb") as f:` block.
+- Update the `client.upload_blob` call to use the passed `image_bytes` directly instead of `img_data`.
 
-### 2. Implement CLI Arguments (`src/av_collisions/main.py`)
-- Import `argparse`.
-- Add `--bootstrap`: A boolean flag to run the bootstrap mode.
-- Add `--url`: An optional string argument to run the local test mode for a specific report URL.
-
-### 3. Implement Bootstrap Mode
-- When `--bootstrap` is passed:
-  - Fetch all reports from the DMV.
-  - Iterate through them.
-  - If a report is not in `state.json`, mark it as processed with basic metadata (url, date_text, company, date, processed_at).
-  - Do NOT download the PDFs or post to Bluesky.
-  - Save the updated `state.json`.
-
-### 4. Implement Local Test Mode
-- When `--url <URL>` is passed:
-  - Bypass the DMV fetch.
-  - Call `download_pdf` and `extract_section_5` for the provided URL.
-  - Save the extracted image (`.png`) and metadata (`.json`) directly to the current working directory (`.`).
-  - Do NOT update `state.json`.
-  - Do NOT post to Bluesky.
-
-### 5. Refactor Normal Mode (Default)
-- When no flags are passed:
-  - Fetch reports from the DMV.
-  - For each new report:
-    - Download and parse the PDF.
-    - Write the image to a *temporary file* (using the `tempfile` module).
-    - Post to Bluesky using the temporary image file.
-    - Update `state.json`.
-    - Do NOT write to `data/images` or `data/metadata`.
-
-### 6. Update GitHub Action (`.github/workflows/daily-scrape.yml`)
-- Modify the `Commit and push changes` step.
-- Update the `file_pattern` to only include `state.json`. Remove the references to `data/images/*.png` and `data/metadata/*.json`.
+### 2. Refactor `src/av_collisions/main.py`
+- Remove the `import tempfile` line and the `import os` if it becomes completely unused (though it's still used for `os.makedirs` in `pdf_parser` and `os.path.exists` isn't needed here anymore, but `os` might still be used for other things. Wait, `main.py` uses `os.makedirs`? No, `main.py` uses `os.environ`? No, `main.py` uses `os.makedirs` at the top? Wait, the latest `main.py` doesn't have `os.makedirs("data/images")` anymore. Let's just remove `tempfile` and the specific `os` calls for tmp paths).
+- In `process_single_report`, remove the `with tempfile.NamedTemporaryFile(...) as tmp:` block.
+- Update the `post_to_bluesky` call to directly pass `image_bytes` instead of the temporary file path.
+- Remove the `try...finally` block that cleans up the temporary file.
 
 ## Verification
-- Test `--bootstrap` locally to ensure it populates `state.json` without errors.
-- Test `--url <some_pdf_url>` to ensure it writes the `.png` and `.json` to the current directory.
-- Test a normal run to ensure it uses temporary files and correctly processes state.
+- Run `uv run ruff check src/av_collisions` and `uv run mypy src/av_collisions` to ensure the type signatures are correct and there are no linting errors.
+- (Optional) Test locally with `--url` to ensure it still works, although `--url` doesn't post to Bluesky anyway.

@@ -1,11 +1,9 @@
 import logging
-import os
 import re
 import argparse
-import tempfile
 from datetime import datetime
 from typing import Dict, Any
-from .fetcher import fetch_collision_reports, parse_date_and_company
+from .fetcher import fetch_collision_reports
 from .pdf_parser import download_pdf, extract_section_5, save_output
 from .state_manager import load_state, save_state, is_processed, mark_processed
 from .bluesky import post_to_bluesky
@@ -65,18 +63,9 @@ def process_single_report(
                 logging.info(f"Saved output to {save_dir}")
 
             if post:
-                # Use a temporary file for posting
-                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                    tmp.write(image_bytes)
-                    tmp_path = tmp.name
-
-                try:
-                    post_to_bluesky(
-                        url, company, date, tmp_path, extra_metadata, description
-                    )
-                finally:
-                    if os.path.exists(tmp_path):
-                        os.remove(tmp_path)
+                post_to_bluesky(
+                    url, company, date, image_bytes, extra_metadata, description
+                )
             return True
         else:
             logging.warning(f"Could not find Section 5 in PDF: {url}")

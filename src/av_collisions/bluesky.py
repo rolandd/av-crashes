@@ -8,7 +8,7 @@ def post_to_bluesky(
     url: str,
     company: str,
     formatted_date: str,
-    image_path: str,
+    image_bytes: bytes,
     metadata: Dict[str, Any],
     description_text: str,
 ) -> None:
@@ -37,10 +37,7 @@ def post_to_bluesky(
         client.login(handle, password)
 
         # Upload image
-        with open(image_path, "rb") as f:
-            img_data = f.read()
-
-        upload = client.upload_blob(img_data)
+        upload = client.upload_blob(image_bytes)
 
         # Create facets for the link
         # The link_text is at the start of post_text
