@@ -123,19 +123,22 @@ def main() -> None:
         for report in reports:
             url = report["url"]
             existing_meta = state.get("processed_urls", {}).get(url, {})
-            
+
             # Update if:
             # 1. Not in state
             # 2. Missing company info
             # 3. Uses fallback "AV Collision"
             # 4. Has today's date (indicating fallback from previous run) but report is older
             needs_update = (
-                not is_processed(state, url) 
-                or "company" not in existing_meta 
+                not is_processed(state, url)
+                or "company" not in existing_meta
                 or existing_meta.get("company") == "AV Collision"
-                or (existing_meta.get("date") == today_str and report["date"] != today_str)
+                or (
+                    existing_meta.get("date") == today_str
+                    and report["date"] != today_str
+                )
             )
-            
+
             if needs_update:
                 metadata = {
                     "raw_title": report["raw_title"],
@@ -152,8 +155,10 @@ def main() -> None:
         # But we might want to keep history. Let's just filter out the "Submit" ones manually if they linger.
         # Actually, let's just purge known noise URLs from state if they exist.
         noise_urls = [
-            u for u in state.get("processed_urls", {}) 
-            if "submit-a-collision" in u or "accident-involving-an-autonomous-vehicle" in u
+            u
+            for u in state.get("processed_urls", {})
+            if "submit-a-collision" in u
+            or "accident-involving-an-autonomous-vehicle" in u
         ]
         for u in noise_urls:
             logging.info(f"Removing noise URL from state: {u}")

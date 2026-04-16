@@ -19,7 +19,11 @@ def parse_date_and_company(date_text: str) -> Dict[str, str] | None:
     """
     # Skip known noise
     lower_text = date_text.lower()
-    noise_keywords = ["submit a collision", "accident-involving-an-autonomous-vehicle", "traffic accident involving"]
+    noise_keywords = [
+        "submit a collision",
+        "accident-involving-an-autonomous-vehicle",
+        "traffic accident involving",
+    ]
     if any(k in lower_text for k in noise_keywords):
         return None
 
