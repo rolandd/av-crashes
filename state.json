@@ -2765,6 +2765,13 @@
       "processed_at": "2026-04-16T14:39:30.465756",
       "raw_title": "Waymo April 6, 2023 (PDF)"
     },
+    "https://www.dmv.ca.gov/portal/file/waymo_040626-pdf/": {
+      "autonomous_mode": true,
+      "company": "Waymo",
+      "date": "2026-04-06",
+      "processed_at": "2026-04-21T09:24:21.327850",
+      "raw_title": "Waymo April 6, 2026 (PDF)"
+    },
     "https://www.dmv.ca.gov/portal/file/waymo_040822-pdf/": {
       "bootstrapped": true,
       "company": "Waymo",
@@ -4927,6 +4934,13 @@
       "date": "2024-04-02",
       "processed_at": "2026-04-16T14:39:30.465650",
       "raw_title": "Zoox April 2, 2024 (PDF)"
+    },
+    "https://www.dmv.ca.gov/portal/file/zoox_040226-pdf/": {
+      "autonomous_mode": true,
+      "company": "Zoox",
+      "date": "2026-04-02",
+      "processed_at": "2026-04-21T09:24:23.856938",
+      "raw_title": "Zoox April 2, 2026 (PDF)"
     },
     "https://www.dmv.ca.gov/portal/file/zoox_040425-pdf/": {
       "bootstrapped": true,
