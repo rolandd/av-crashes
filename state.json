@@ -2779,6 +2779,13 @@
       "processed_at": "2026-04-16T14:39:30.465863",
       "raw_title": "Waymo April 8, 2022 (PDF)"
     },
+    "https://www.dmv.ca.gov/portal/file/waymo_041026-pdf/": {
+      "autonomous_mode": true,
+      "company": "Waymo",
+      "date": "2026-04-10",
+      "processed_at": "2026-04-29T10:04:03.463300",
+      "raw_title": "Waymo April 10, 2026 (PDF)"
+    },
     "https://www.dmv.ca.gov/portal/file/waymo_04112024-pdf/": {
       "bootstrapped": true,
       "company": "Waymo",
@@ -2799,6 +2806,20 @@
       "date": "2023-04-12",
       "processed_at": "2026-04-16T14:39:30.465752",
       "raw_title": "Waymo April 12, 2023 (PDF)"
+    },
+    "https://www.dmv.ca.gov/portal/file/waymo_041226-1-pdf/": {
+      "autonomous_mode": true,
+      "company": "Waymo",
+      "date": "2026-04-12",
+      "processed_at": "2026-04-29T10:04:00.493299",
+      "raw_title": "Waymo April 12, 2026 (1) (PDF)"
+    },
+    "https://www.dmv.ca.gov/portal/file/waymo_041226-2-pdf/": {
+      "autonomous_mode": true,
+      "company": "Waymo",
+      "date": "2026-04-12",
+      "processed_at": "2026-04-29T10:03:57.988023",
+      "raw_title": "Waymo April 12, 2026 (2) (PDF)"
     },
     "https://www.dmv.ca.gov/portal/file/waymo_04132024-pdf/": {
       "bootstrapped": true,
